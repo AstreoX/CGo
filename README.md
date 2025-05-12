@@ -35,7 +35,8 @@ CGoGame/
 │   ├── ai.c            # AI算法实现
 │   └── utils.c         # 工具函数实现
 └── resources/          # 资源文件目录
-    └── logo.bmp        # 国防科技大学图样
+    └── logo.jpg        # 国防科技大学图样
+    └── background.jpg  # 国防科技大学图样
 ```
 
 ## 编译和运行
