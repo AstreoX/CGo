@@ -1,0 +1,14 @@
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build directories
+/build/
+
+# IDE settings
+/.vscode/
+
+# Git directory
+/.git/ 
