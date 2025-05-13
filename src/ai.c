@@ -16,7 +16,7 @@ static const int DX[4] = {-1, 0, 1, 0}; // Used in expansion strategies
 static const int DY[4] = {0, -1, 0, 1}; // Used in expansion strategies
 
 // 优化的AI配置参数
-#define DEFAULT_SIMULATION_COUNT 272  // 增加模拟次数
+#define DEFAULT_SIMULATION_COUNT 500  // 增加模拟次数
 #define DEFAULT_EXPLORATION_PARAM 3.5 // UCT探索参数
 #define DEFAULT_MAX_DEPTH 64         // 减少最大搜索深度
 #define MCTS_TIME_LIMIT 2871         // 时间限制
