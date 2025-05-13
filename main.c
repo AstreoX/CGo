@@ -17,8 +17,15 @@
 
 /**
  * @brief 程序入口函数
+ * @param argc 命令行参数数量
+ * @param argv 命令行参数数组
+ * @return 程序退出状态码
  */
 int main(int argc, char* argv[]) {
+    // SDL需要argc和argv参数，虽然在此程序中未使用
+    (void)argc;
+    (void)argv;
+    
     // 初始化随机数生成器
     initRandom();
     
