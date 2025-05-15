@@ -20,7 +20,7 @@ static const int DY[4] = {0, -1, 0, 1}; // Used in expansion strategies
 #define DEFAULT_EXPLORATION_PARAM 3.2 // UCT探索参数
 #define DEFAULT_MAX_DEPTH 88         // 减少最大搜索深度
 #define MCTS_TIME_LIMIT 2851         // 时间限制
-#define MCTS_RANGE_SMALL 3           // 小范围搜索3×3
+#define MCTS_RANGE_SMALL 2          // 小范围搜索3×3
 
 void initAIConfig(AIConfig* config) {
     config->simulationCount = DEFAULT_SIMULATION_COUNT;
