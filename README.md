@@ -34,7 +34,6 @@ CGoGame/
 │   ├── gui.c           # 图形界面实现
 │   ├── ai.c            # AI算法实现
 │   └── utils.c         # 工具函数实现
-├── libs/               # DLL依赖库目录
 └── resources/          # 资源文件目录
     └── logo.jpg        # 国防科技大学图样
     └── background.jpg  # 国防科技大学图样
@@ -45,7 +44,6 @@ CGoGame/
 ### 依赖项
 - SDL2
 - SDL2_image
-- SDL2_ttf
 
 ### 编译
 ```
@@ -54,14 +52,8 @@ make
 
 ### 运行
 ```
-双击run_game.bat运行游戏
+./cgogame
 ```
-
-### 准备发布版本
-```
-make prepare_release
-```
-这将在`release`目录下创建一个包含可执行文件和所有必要DLL的版本。
 
 ## 操作说明
 - [A] - 切换AI模式
