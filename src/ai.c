@@ -15,12 +15,12 @@
 static const int DX[4] = {-1, 0, 1, 0}; // Used in expansion strategies
 static const int DY[4] = {0, -1, 0, 1}; // Used in expansion strategies
 
-// 优化的AI配置参数
-#define DEFAULT_SIMULATION_COUNT 200  // 增加模拟次数
-#define DEFAULT_EXPLORATION_PARAM 3.2 // UCT探索参数
-#define DEFAULT_MAX_DEPTH 88         // 减少最大搜索深度
-#define MCTS_TIME_LIMIT 2851         // 时间限制
-#define MCTS_RANGE_SMALL 2          // 小范围搜索3×3
+// 优化的AI配置参数（针对围棋规则）
+#define DEFAULT_SIMULATION_COUNT 1000  // 增加模拟次数以提高棋力
+#define DEFAULT_EXPLORATION_PARAM 1.41 // UCT探索参数 (sqrt(2), 标准值)
+#define DEFAULT_MAX_DEPTH 88          // 最大搜索深度
+#define MCTS_TIME_LIMIT 2851          // 时间限制 (毫秒)
+#define MCTS_RANGE_SMALL 3            // 搜索范围 (±3格 = 7×7)
 
 void initAIConfig(AIConfig* config) {
     config->simulationCount = DEFAULT_SIMULATION_COUNT;
@@ -86,7 +86,7 @@ static MCTSNode* createChildNode(MCTSNode* parent, Position move, Stone player) 
 }
 
 /**
- * @brief 计算UCT值
+ * @brief 计算UCT值（Upper Confidence Bound for Trees）
  * @param node 节点
  * @param parentVisits 父节点访问次数
  * @param explorationParam 探索参数
@@ -96,12 +96,13 @@ static double calculateUCT(MCTSNode* node, int parentVisits, double explorationP
     if (node->visits == 0) {
         return INFINITY; // 未访问过的节点优先选择
     }
-    
-    // 优化的UCT公式，随着访问次数逐渐减小探索权重
-    double exploitation = node->wins / node->visits;
-    double visitFactor = sqrt(2.0 - (node->visits / (double)(parentVisits + 1)));
-    double exploration = explorationParam * visitFactor * sqrt(log(parentVisits) / node->visits);
-    
+
+    // 标准 UCT 公式: exploitation + C * sqrt(ln(N) / n)
+    // exploitation: 利用已知信息（胜率）
+    // exploration: 探索未知区域
+    double exploitation = node->wins / (double)node->visits;
+    double exploration = explorationParam * sqrt(log((double)parentVisits) / (double)node->visits);
+
     return exploitation + exploration;
 }
 
@@ -438,20 +439,73 @@ double simulateGame(MCTSNode* node, Board* board, AIConfig* config) {
         currentPlayer = (currentPlayer == BLACK) ? WHITE : BLACK;
     }
     
-    // 简化评分计算，减少计算开销
-    double score;
-    
-    // 提子加权评分 - 使用黑方和白方的提子数作为评分
-    int blackScore = tempBoard.blackCaptures;
-    int whiteScore = tempBoard.whiteCaptures;
-    
-    // 根据当前玩家返回相应评分
-    if ((int)node->player == BLACK) {
-        score = (blackScore > whiteScore) ? 1.0 : 0.0;
-    } else {
-        score = (whiteScore > blackScore) ? 1.0 : 0.0;
+    // 围棋评分计算：综合考虑提子数、气数和地盘
+    double score = 0.5; // 默认平局分数
+
+    // 1. 提子数评分（权重 40%）- 围棋中提子很重要
+    int blackCaptures = tempBoard.blackCaptures;
+    int whiteCaptures = tempBoard.whiteCaptures;
+    double captureScore = 0.5;
+
+    if (blackCaptures + whiteCaptures > 0) {
+        captureScore = (double)blackCaptures / (double)(blackCaptures + whiteCaptures);
     }
-    
+
+    // 2. 气数评分（权重 30%）- 气数多的一方更有优势
+    int blackLiberties = tempBoard.blackLiberties;
+    int whiteLiberties = tempBoard.whiteLiberties;
+    double libertyScore = 0.5;
+
+    if (blackLiberties + whiteLiberties > 0) {
+        libertyScore = (double)blackLiberties / (double)(blackLiberties + whiteLiberties);
+    }
+
+    // 3. 地盘估算（权重 30%）- 简化版：统计各自控制的空点
+    int blackTerritory = 0;
+    int whiteTerritory = 0;
+
+    // 简化估算：检查每个空点周围的棋子
+    for (int y = 0; y < BOARD_SIZE; y++) {
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            if (tempBoard.board[y][x] == EMPTY) {
+                int blackNear = 0;
+                int whiteNear = 0;
+
+                // 检查周围 3×3 范围
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+
+                        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                            if (tempBoard.board[ny][nx] == BLACK) blackNear++;
+                            else if (tempBoard.board[ny][nx] == WHITE) whiteNear++;
+                        }
+                    }
+                }
+
+                // 如果周围主要是某一方的棋子，认为这是该方的地盘
+                if (blackNear > whiteNear) blackTerritory++;
+                else if (whiteNear > blackNear) whiteTerritory++;
+            }
+        }
+    }
+
+    double territoryScore = 0.5;
+    if (blackTerritory + whiteTerritory > 0) {
+        territoryScore = (double)blackTerritory / (double)(blackTerritory + whiteTerritory);
+    }
+
+    // 综合评分：40% 提子 + 30% 气数 + 30% 地盘
+    double finalScore = 0.4 * captureScore + 0.3 * libertyScore + 0.3 * territoryScore;
+
+    // 根据当前节点的玩家返回相应评分
+    if (node->player == BLACK) {
+        score = finalScore;
+    } else {
+        score = 1.0 - finalScore;
+    }
+
     return score;
 }
 
